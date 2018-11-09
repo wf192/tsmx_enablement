@@ -6,6 +6,10 @@ First Git In-Lab Project
 
 None
 
+# Licence
+
+What's a licence?
+
 # Built with
 
 Flu & Faith
