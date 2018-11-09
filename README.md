@@ -8,5 +8,4 @@ None
 
 # Built with
 
-Flu
-Faith
+Flu & Faith
