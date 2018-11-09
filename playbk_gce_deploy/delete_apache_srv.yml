@@ -1,0 +1,28 @@
+- name: Create gce apache server
+  hosts: localhost
+  connection: local
+  gather_facts: True
+
+  vars:
+    service_account_email: <your_account_email>
+    credentials_file: <your_cred_file>
+    project_id: <your_project_id>
+    instance_names: apa-web-1,apa-web-2,apa-web-3
+
+  tasks:
+  - name: Delete FW rule to HTTP
+    gce_net:
+      fwname: "http-fw-rule"
+      state: deleted
+      service_account_email: "{{ service_account_email }}"
+      credentials_file: "{{ credentials_file }}"
+      project_id: "{{ project_id }}"
+
+  - name: Delete instances
+    gce:
+      zone: us-east1-b
+      instance_names: "{{ instance_names }}"
+      state: deleted
+      service_account_email: "{{ service_account_email }}"
+      credentials_file: "{{ credentials_file }}"
+      project_id: "{{ project_id }}"

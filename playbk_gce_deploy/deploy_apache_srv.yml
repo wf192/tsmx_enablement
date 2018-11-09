@@ -1,0 +1,67 @@
+- name: Create gce apache server
+  hosts: localhost
+  connection: local
+  gather_facts: True
+
+  vars:
+    service_account_email: <your_account_email>
+    credentials_file: <your_cred_file>
+    project_id: <your_project_id>
+    machine_type: n1-standard-1
+    image: centos-7
+    instance_names: apa-web-1,apa-web-2,apa-web-3
+
+  tasks:
+  - name: Create FW rule to HTTP
+    gce_net:
+      name: default
+      fwname: "http-fw-rule"
+      allowed: tcp:80
+      state: present
+      src_range: "0.0.0.0/0"
+      target_tags: "http-server"
+      service_account_email: "{{ service_account_email }}"
+      credentials_file: "{{ credentials_file }}"
+      project_id: "{{ project_id }}"
+
+  - name: Create instance based on {{ image }}
+    gce:
+      zone: us-east1-b
+      instance_names: "{{ instance_names }}"
+      machine_type: "{{ machine_type }}"
+      image: "{{ image }}"
+      state: present
+      preemptible: true
+      tags: http-server,https-server
+      service_account_email: "{{ service_account_email }}"
+      credentials_file: "{{ credentials_file }}"
+      project_id: "{{ project_id }}"
+      metadata: '{"sshKeys":"<your_email_user>:ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQDBAKLtNb4Yv4vy4EN2/SHK1BrV4RCeMXGDltjVDdcuGbJhbfHlWs9Chl653bPqK3lQNhIO9sxVehp7SVDyv3yJawPnfVwoKFyLB9InmQiyoUJ4VrsAlSC5b/0jir80xw/nY1vv8Chr9luAcVvZQahR1PVchFUghnR4Enh87hsfR74mP3Omq2eTOVks2Nz1M8fd715IPVQUMOEoY/MOYBWVcldWzKo0LJmJH1B/jSEkadYEshCW1ix2TDDhpASYfAA+KjesB7IhdVAnaSViGDSTnDArlrtWidK5u62vNp84FLdJ2OIcpIbTNaV9LLiRLLawIp+i6sYtKPO7FMowN+G2dmWXT6rUhtFTEoQORAkGeaYnxJvhHiebso8weulb9OMcfJbPPtx+nl73+ZStFyp4EFV9bvFtwTneaIqRKHOt38cU8YM78z1OeXeaj5aPrEXiRmxQ5UZbyVH1IZ1UXeW+a1yXfKugzkoImI74R1DGEyISivm18QEupH7m0+kXZ+uM4Tl+xX20MWAcYoqplSdmaYNESqvvCnJQ6RMH7EyZQddFX77ctlMF/8Aiz8eFmrpIo/8KXA9WOGc9xYA9n+ddf2OSNQpoAU54rqpZyGhKSwShmr6AALD9q+LlYnDRxP2H4PXoIE7fnmDBYy/W2nHQ+hmp44ikDdhhRh7klGjnAQ== walberth@srv1.tsmx.lab"}'
+    register: gce
+
+  - name: Save host data within a Group
+    add_host:
+      hostname: "{{ item.public_ip }}"
+      groupname: gce_instances_sbx
+    with_items: "{{ gce.instance_data }}"
+
+  - name: Wait for ssh hosts
+    wait_for: host={{ item.public_ip }} port=22 delay=10 timeout=85
+    with_items: "{{ gce.instance_data }}"
+
+  - name: Setting ip as instance fact
+    set_fact: host={{ item.public_ip }}
+    with_items: "{{ gce.instance_data }}"
+
+
+
+
+- name: Configure instance post-creation
+  hosts: gce_instances_sbx
+  gather_facts: True
+  remote_user: <your_email_user>
+  become: yes
+  become_method: sudo
+
+  roles:
+    - ../myapache/

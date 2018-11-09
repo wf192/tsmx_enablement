@@ -1,0 +1,23 @@
+- name: Deploy loadbalancer
+  hosts: localhost
+  connection: local
+  gather_facts: false
+
+  vars:
+    service_account_email: <your_account_email>
+    credentials_file: <your_cred_file>
+    project_id: <your_project_id>
+
+  tasks:
+    - name: Create loadbalancer for apa-web-X
+      gce_lb:
+        name: lbserver
+        state: present
+        region:  us-east1
+        members: ['us-east1-b/apa-web-1','us-east1-b/apa-web-2','us-east1-b/apa-web-3']
+        httphealthcheck_name: hc
+        httphealthcheck_port: 80
+        httphealthcheck_path: "/"
+        service_account_email: "{{ service_account_email }}"
+        credentials_file: "{{ credentials_file }}"
+        project_id: "{{ project_id }}"

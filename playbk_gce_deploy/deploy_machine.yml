@@ -1,0 +1,23 @@
+- name: Playbook to create GCE instance
+  hosts: localhost
+  connection: local
+  gather_facts: no
+
+  vars:
+    service_account_email: <your_account_email>
+    credentials_file: <your_cred_file>
+    project_id: <your_project_id>
+    machine_type: n1-standard-1
+    image: centos-7
+
+  tasks:
+    - name: Launch instance
+      gce:
+        zone: us-east1-b
+        instance_names: quid-pro-2
+        machine_type: "{{ machine_type }}"
+        image: "{{ image }}"
+        service_account_email: "{{ service_account_email }}"
+        credentials_file: "{{ credentials_file }}"
+        project_id: "{{ project_id }}"
+        metadata: '{"sshKeys":"<your_email_user>:<insert pub key>"}'
