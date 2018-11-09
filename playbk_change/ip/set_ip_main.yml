@@ -1,0 +1,17 @@
+- name: Set IPv4 in ETHX
+  hosts: servers
+  tasks:
+
+    - name: Backup original and dump the new one
+      copy:
+        src: ifcfg-ethXX
+        dest: /etc/sysconfig/network-scripts/ifcfg-eth0
+        owner: root
+        group: root
+        mode: 0644
+        backup: yes
+
+    - name: Restart Network
+      service:
+        name: network
+        state: restarted
